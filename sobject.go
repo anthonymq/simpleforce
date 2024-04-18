@@ -3,6 +3,7 @@ package simpleforce
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -177,22 +178,23 @@ func (obj *SObject) Update() *SObject {
 
 // Upsert creates SObject or updates existing SObject in place. Upon successful upsert, same SObject is returned for chained access.
 // ID, ExternalIDField and Type are required. ID is the value of the external ID in this case.
-func (obj *SObject) Upsert() *SObject {
+func (obj *SObject) Upsert() (*SObject, error) {
 	log.Println(logPrefix, "ExternalID:", obj.ExternalID())
 	log.Println(logPrefix, "ExternalIDField:", obj.ExternalIDFieldName())
 	if obj.Type() == "" || obj.client() == nil || obj.ExternalIDFieldName() == "" ||
 		obj.ExternalID() == "" {
 		// Sanity check.
-		log.Println(logPrefix, "required fields are missing")
-		return nil
+		// log.Println(logPrefix, "required fields are missing")
+		return nil, errors.New(fmt.Sprint(logPrefix, "required fields are missing"))
 	}
 
 	// Make a copy of the incoming SObject, but skip certain metadata fields as they're not understood by salesforce.
 	reqObj := obj.makeCopy()
 	reqData, err := json.Marshal(reqObj)
 	if err != nil {
-		log.Println(logPrefix, "failed to convert sobject to json,", err)
-		return nil
+		// log.Println(logPrefix, "failed to convert sobject to json,", err)
+		return nil, errors.New(fmt.Sprint(logPrefix, "failed to convert sobject to json,", err))
+		// return nil
 	}
 
 	queryBase := "sobjects/"
@@ -203,8 +205,9 @@ func (obj *SObject) Upsert() *SObject {
 		makeURL(queryBase + obj.Type() + "/" + obj.ExternalIDFieldName() + "/" + obj.ExternalID())
 	respData, err := obj.client().httpRequest(http.MethodPatch, url, bytes.NewReader(reqData))
 	if err != nil {
-		log.Println(logPrefix, "failed to process http request,", err)
-		return nil
+		// log.Println(logPrefix, "failed to process http request,", err)
+		return nil, errors.New(fmt.Sprint(logPrefix, "failed to process http request,", err))
+		// return nil
 	}
 
 	// Upsert returns with 201 and id in response if a new record is created. If a record is updated, it returns
@@ -212,12 +215,13 @@ func (obj *SObject) Upsert() *SObject {
 	if len(respData) > 0 {
 		err = obj.setIDFromResponseData(respData)
 		if err != nil {
-			log.Println(logPrefix, "failed to parse response,", err)
-			return nil
+			// log.Println(logPrefix, "failed to parse response,", err)
+			return nil, errors.New(fmt.Sprint(logPrefix, "failed to parse response,", err))
+			// return nil
 		}
 	}
 
-	return obj
+	return obj, nil
 }
 
 // Delete deletes an SObject record identified by external ID. nil is returned if the operation completes successfully;

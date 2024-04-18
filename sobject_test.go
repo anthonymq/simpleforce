@@ -204,7 +204,7 @@ func TestSObject_Upsert(t *testing.T) {
 
 	// Positive create new object through upsert
 	case1 := client.SObject("Case")
-	case1Result := case1.Set("Subject", "Case created by simpleforce on "+time.Now().Format("2006/01/02 03:04:05")).
+	case1Result, _ := case1.Set("Subject", "Case created by simpleforce on "+time.Now().Format("2006/01/02 03:04:05")).
 		Set("Comments", "This case is created by simpleforce").
 		Set("customExtIdField__c", uuid.NewString()).
 		Set("ExternalIDField", "customExtIdField__c").
@@ -232,13 +232,13 @@ func TestSObject_Upsert(t *testing.T) {
 
 	// Negative: object without type.
 	obj := client.SObject()
-	if obj.Upsert() != nil {
+	if sobj, _ := obj.Upsert(); sobj != nil {
 		t.Fail()
 	}
 
 	// Negative: object without client.
 	obj = &SObject{}
-	if obj.Upsert() != nil {
+	if sobj, _ := obj.Upsert(); sobj != nil {
 		t.Fail()
 	}
 
@@ -246,7 +246,7 @@ func TestSObject_Upsert(t *testing.T) {
 	obj = client.SObject("__SOME_INVALID_TYPE__").
 		Set("ExternalIDField", "customExtIdField__c").
 		Set("customExtIdField__c", uuid.NewString())
-	if obj.Upsert() != nil {
+	if sobj, _ := obj.Upsert(); sobj != nil {
 		t.Fail()
 	}
 
@@ -255,14 +255,14 @@ func TestSObject_Upsert(t *testing.T) {
 		Set("ExternalIDField", "customExtIdField__c").
 		Set("customExtIdField__c", uuid.NewString()).
 		Set("__SOME_INVALID_FIELD__", "")
-	if obj.Upsert() != nil {
+	if sobj, _ := obj.Upsert(); sobj != nil {
 		t.Fail()
 	}
 
 	// Negative: Missing ext ID
 	obj = client.SObject("Case").
 		Set("ExternalIDField", "customExtIdField__c")
-	if obj.Upsert() != nil {
+	if sobj, _ := obj.Upsert(); sobj != nil {
 		t.Fail()
 	}
 }
