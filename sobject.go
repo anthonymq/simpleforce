@@ -206,7 +206,8 @@ func (obj *SObject) Upsert() (*SObject, error) {
 	respData, err := obj.client().httpRequest(http.MethodPatch, url, bytes.NewReader(reqData))
 	if err != nil {
 		// log.Println(logPrefix, "failed to process http request,", err)
-		return nil, errors.New(fmt.Sprint(logPrefix, "failed to process http request,", err))
+		// return nil, errors.New(fmt.Sprint(logPrefix, "failed to process http request,", err))
+		return nil, err
 		// return nil
 	}
 
