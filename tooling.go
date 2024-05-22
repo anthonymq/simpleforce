@@ -3,8 +3,9 @@ package simpleforce
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/url"
+
+	"github.com/arun0009/go-logger/pkg/logger"
 )
 
 // ExecuteAnonymousResult is returned by ExecuteAnonymous function
@@ -41,7 +42,7 @@ func (client *Client) ExecuteAnonymous(apexBody string) (*ExecuteAnonymousResult
 
 	data, err := client.httpRequest("GET", endpoint, nil)
 	if err != nil {
-		log.Println(logPrefix, "HTTP GET request failed:", endpoint)
+		logger.L().Debug(logPrefix, "HTTP GET request failed:", endpoint)
 		return nil, err
 	}
 

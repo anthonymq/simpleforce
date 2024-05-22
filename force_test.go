@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/arun0009/go-logger/pkg/logger"
 )
 
 var (
@@ -32,7 +34,7 @@ func requireClient(t *testing.T, skippable bool) *Client {
 		checkCredentialsAndSkip(t)
 	}
 
-	client := NewClient(sfURL, DefaultClientID, DefaultAPIVersion)
+	client := NewClient(sfURL, DefaultClientID, DefaultAPIVersion, logger.L())
 	if client == nil {
 		t.Fail()
 	}
@@ -46,7 +48,7 @@ func requireClient(t *testing.T, skippable bool) *Client {
 func TestClient_LoginPassword(t *testing.T) {
 	checkCredentialsAndSkip(t)
 
-	client := NewClient(sfURL, DefaultClientID, DefaultAPIVersion)
+	client := NewClient(sfURL, DefaultClientID, DefaultAPIVersion, logger.L())
 	if client == nil {
 		t.Fatal()
 	}
@@ -68,7 +70,7 @@ func TestClient_LoginPassword(t *testing.T) {
 func TestClient_LoginPasswordNoToken(t *testing.T) {
 	checkCredentialsAndSkip(t)
 
-	client := NewClient(sfURL, DefaultClientID, DefaultAPIVersion)
+	client := NewClient(sfURL, DefaultClientID, DefaultAPIVersion, logger.L())
 	if client == nil {
 		t.Fatal()
 	}
@@ -153,7 +155,7 @@ func TestClient_ApexREST(t *testing.T) {
 	endpoint := "services/apexrest/my-custom-endpoint"
 	result, err := client.ApexREST(endpoint, "POST", strings.NewReader(`{"my-property": "my-value"}`))
 	if err != nil {
-		log.Println(logPrefix, "request failed,", err)
+		logger.L().Debug(logPrefix, "request failed,", err)
 		t.FailNow()
 	}
 

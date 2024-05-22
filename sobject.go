@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/arun0009/go-logger/pkg/logger"
 	"github.com/pkg/errors"
 )
 
@@ -98,7 +99,7 @@ func (obj *SObject) Get(id ...string) *SObject {
 	url := obj.client().makeURL("sobjects/" + obj.Type() + "/" + oid)
 	data, err := obj.client().httpRequest(http.MethodGet, url, nil)
 	if err != nil {
-		log.Println(logPrefix, "http request failed,", err)
+		logger.L().Debug(logPrefix, "http request failed,", err)
 		return nil
 	}
 
@@ -179,8 +180,8 @@ func (obj *SObject) Update() *SObject {
 // Upsert creates SObject or updates existing SObject in place. Upon successful upsert, same SObject is returned for chained access.
 // ID, ExternalIDField and Type are required. ID is the value of the external ID in this case.
 func (obj *SObject) Upsert() (*SObject, error) {
-	log.Println(logPrefix, "ExternalID:", obj.ExternalID())
-	log.Println(logPrefix, "ExternalIDField:", obj.ExternalIDFieldName())
+	logger.L().Info(logPrefix, "ExternalID:", obj.ExternalID())
+	logger.L().Info(logPrefix, "ExternalIDField:", obj.ExternalIDFieldName())
 	if obj.Type() == "" || obj.client() == nil || obj.ExternalIDFieldName() == "" ||
 		obj.ExternalID() == "" {
 		// Sanity check.
@@ -205,7 +206,8 @@ func (obj *SObject) Upsert() (*SObject, error) {
 		makeURL(queryBase + obj.Type() + "/" + obj.ExternalIDFieldName() + "/" + obj.ExternalID())
 	respData, err := obj.client().httpRequest(http.MethodPatch, url, bytes.NewReader(reqData))
 	if err != nil {
-		// log.Println(logPrefix, "failed to process http request,", err)
+		log.Println(logPrefix, "failed to process http request,", err)
+		logger.L().Info(err)
 		// return nil, errors.New(fmt.Sprint(logPrefix, "failed to process http request,", err))
 		return nil, err
 		// return nil

@@ -13,6 +13,10 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/arun0009/go-logger/pkg/logger"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -50,18 +54,18 @@ type QueryResult struct {
 
 // Expose sid to save in admin settings
 func (client *Client) GetSid() (sid string) {
-        return client.sessionID
+	return client.sessionID
 }
 
-//Expose Loc to save in admin settings
+// Expose Loc to save in admin settings
 func (client *Client) GetLoc() (loc string) {
 	return client.instanceURL
 }
 
 // Set SID and Loc as a means to log in without LoginPassword
 func (client *Client) SetSidLoc(sid string, loc string) {
-        client.sessionID = sid
-        client.instanceURL = loc
+	client.sessionID = sid
+	client.instanceURL = loc
 }
 
 // Query runs an SOQL query. q could either be the SOQL string or the nextRecordsURL.
@@ -86,7 +90,7 @@ func (client *Client) Query(q string) (*QueryResult, error) {
 
 	data, err := client.httpRequest("GET", u, nil)
 	if err != nil {
-		log.Println(logPrefix, "HTTP GET request failed:", u)
+		logger.L().Debug(logPrefix, "HTTP GET request failed:", u)
 		return nil, err
 	}
 
@@ -114,7 +118,7 @@ func (client *Client) ApexREST(method, path string, requestBody io.Reader) ([]by
 
 	data, err := client.httpRequest(method, u, requestBody)
 	if err != nil {
-		log.Println(logPrefix, fmt.Sprintf("HTTP %s request failed:", method), u)
+		logger.L().Debug(logPrefix, fmt.Sprintf("HTTP %s request failed:", method), u)
 		return nil, err
 	}
 
@@ -182,7 +186,7 @@ func (client *Client) LoginPassword(username, password, token string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Println(logPrefix, "request failed,", resp.StatusCode)
+		logger.L().Debug(logPrefix, "request failed,", resp.StatusCode)
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
 		newStr := buf.String()
@@ -221,7 +225,8 @@ func (client *Client) LoginPassword(username, password, token string) error {
 	client.user.email = loginResponse.UserEmail
 	client.user.fullName = loginResponse.UserFullName
 
-	log.Println(logPrefix, "User", client.user.name, "authenticated.")
+	// log.Println(logPrefix, "User", client.user.name, "authenticated.")
+	logger.L().Info(logPrefix, "User", client.user.name, "authenticated.")
 	return nil
 }
 
@@ -242,7 +247,7 @@ func (client *Client) httpRequest(method, url string, body io.Reader) ([]byte, e
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		log.Println(logPrefix, "request failed,", resp.StatusCode)
+		logger.L().Debug(logPrefix, "request failed,", resp.StatusCode)
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
 		newStr := buf.String()
@@ -262,7 +267,7 @@ func (client *Client) makeURL(req string) string {
 }
 
 // NewClient creates a new instance of the client.
-func NewClient(url, clientID, apiVersion string) *Client {
+func NewClient(url, clientID, apiVersion string, customLogger logger.Logger) *Client {
 	client := &Client{
 		apiVersion: apiVersion,
 		baseURL:    url,
@@ -270,6 +275,13 @@ func NewClient(url, clientID, apiVersion string) *Client {
 		httpClient: &http.Client{},
 	}
 
+	if customLogger == nil {
+		zapConfig := zap.NewDevelopmentConfig()
+		zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		customLogger, _ = logger.NewZapLogger(zap.Must(zapConfig.Build()))
+	}
+
+	logger.ReplaceGlobals(customLogger)
 	// Remove trailing "/" from base url to prevent "//" when paths are appended
 	if strings.HasSuffix(client.baseURL, "/") {
 		client.baseURL = client.baseURL[:len(client.baseURL)-1]
@@ -332,7 +344,7 @@ func parseHost(input string) string {
 	return "Failed to parse URL input"
 }
 
-//Get the List of all available objects and their metadata for your organization's data
+// Get the List of all available objects and their metadata for your organization's data
 func (client *Client) DescribeGlobal() (*SObjectMeta, error) {
 	apiPath := fmt.Sprintf("/services/data/v%s/sobjects", client.apiVersion)
 	baseURL := strings.TrimRight(client.baseURL, "/")

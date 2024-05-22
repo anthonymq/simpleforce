@@ -37,10 +37,9 @@ func (err SalesforceError) Error() string {
 	return err.Message
 }
 
-//Need to get information out of this package.
-func ParseSalesforceError(statusCode int, responseBody []byte) (err error) {
+func ParseSalesforceError(statusCode int, responseBody []byte) SalesforceError {
 	jsonError := jsonError{}
-	err = json.Unmarshal(responseBody, &jsonError)
+	err := json.Unmarshal(responseBody, &jsonError)
 	if err == nil {
 		return SalesforceError{
 			Message: fmt.Sprintf(
